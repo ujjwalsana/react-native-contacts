@@ -36,6 +36,15 @@ public class ContactsManager extends ReactContextBaseJavaModule {
         getAllContacts(callback);
     }
 
+    /*
+     * Returns all group contactable records on phone
+     * queries CommonDataKinds.Contactables to get phones and emails
+     */
+    @ReactMethod
+    public void getAllGroup(final Callback callback) {
+        getAllGroupContacts(callback);
+    }
+
     /**
      * Introduced for iOS compatibility.  Same as getAll
      *
@@ -61,6 +70,26 @@ public class ContactsManager extends ReactContextBaseJavaModule {
                 ContactsProvider contactsProvider = new ContactsProvider(cr);
                 WritableArray contacts = contactsProvider.getContacts();
 
+                callback.invoke(null, contacts);
+            }
+        });
+    }
+
+    /**
+     * Retrieves group contacts.
+     * Uses raw URI when <code>rawUri</code> is <code>true</code>, makes assets copy otherwise.
+     * @param callback user provided callback to run at completion
+     */
+    private void getAllGroupContacts(final Callback callback) {
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                Context context = getReactApplicationContext();
+                ContentResolver cr = context.getContentResolver();
+
+                ContactsProvider contactsProvider = new ContactsProvider(cr);
+                WritableArray contacts = contactsProvider.getGroupContacts();
+                   
                 callback.invoke(null, contacts);
             }
         });
@@ -93,25 +122,6 @@ public class ContactsManager extends ReactContextBaseJavaModule {
         });
     }
 
-    /**
-     * Retrieves <code>thumbnailPath</code> for contact, or <code>null</code> if not available.
-     * @param contactId contact identifier, <code>recordID</code>
-     * @param callback callback
-     */
-    @ReactMethod
-    public void getPhotoForId(final String contactId, final Callback callback) {
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                Context context = getReactApplicationContext();
-                ContentResolver cr = context.getContentResolver();
-                ContactsProvider contactsProvider = new ContactsProvider(cr);
-                String photoUri = contactsProvider.getPhotoUriFromContactId(contactId);
-
-                callback.invoke(null, photoUri);
-            }
-        });
-    }
 
     /*
      * Adds contact to phone's addressbook

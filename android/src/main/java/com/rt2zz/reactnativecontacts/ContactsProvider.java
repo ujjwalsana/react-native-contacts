@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableArray;
@@ -150,6 +151,60 @@ public class ContactsProvider {
         return contacts;
     }
 
+    public WritableArray getGroupContacts(){
+      WritableArray groupContacts = Arguments.createArray();
+      Map<String, Contact> everyoneElse;
+        {
+            Cursor cursor =null;
+            Cursor contactGroup = contentResolver.query(ContactsContract.Groups.CONTENT_URI, null, null,null, null);
+            while (contactGroup.moveToNext()) {
+                GroupContact gc = new GroupContact();
+
+                WritableArray contacts = Arguments.createArray();
+
+                String groupRowId = contactGroup.getString(contactGroup.getColumnIndex(ContactsContract.Groups._ID));
+                String groupTitle = (contactGroup.getString(contactGroup.getColumnIndex(ContactsContract.Groups.TITLE)));
+                gc.groupId = groupRowId;
+                gc.groupName = groupTitle;
+
+                //this query to get each groupContactsDetails by filtering groupRowId
+                Cursor groupContactsDetails = contentResolver.query(
+                        ContactsContract.Data.CONTENT_URI,null,
+                        ContactsContract.CommonDataKinds.GroupMembership.GROUP_ROW_ID + "=" + groupRowId,null,null);
+
+                while (groupContactsDetails.moveToNext()) {
+                    try {
+                        String contactIndexId = groupContactsDetails.getString(groupContactsDetails.getColumnIndex
+                                (ContactsContract.CommonDataKinds.GroupMembership.CONTACT_ID)) + " ";
+                        String contactName = groupContactsDetails.getString(groupContactsDetails.getColumnIndex
+                                (ContactsContract.CommonDataKinds.GroupMembership.DISPLAY_NAME));
+
+                        try {
+                             cursor = contentResolver.query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null,
+                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactIndexId,null,null);
+
+                            everyoneElse = loadContactsFrom(cursor);
+                            for (Contact contact : everyoneElse.values()) {
+
+                                contacts.pushMap(contact.toMap());
+                            }
+                        }catch(Exception e){} finally {
+                            if (cursor != null) {
+                                cursor.close();
+                            }
+                        }
+                    }catch (Exception ex){}
+                }
+                gc.contacts=contacts;
+                groupContacts.pushMap(gc.toMap());
+            }
+
+        }
+
+        return groupContacts;
+    }
+
     @NonNull
     private Map<String, Contact> loadContactsFrom(Cursor cursor) {
 
@@ -173,8 +228,8 @@ public class ContactsProvider {
             Contact contact = map.get(contactId);
 
             String mimeType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
-
             String name = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+
             if (!TextUtils.isEmpty(name) && TextUtils.isEmpty(contact.displayName)) {
                 contact.displayName = name;
             }
@@ -185,6 +240,10 @@ public class ContactsProvider {
                     contact.photoUri = rawPhotoURI;
                     contact.hasPhoto = true;
                 }
+            }
+            if (mimeType.equals(ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE)) {
+                contact.groupName = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.GroupMembership.DISPLAY_NAME));
+                contact.groupRowId = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.GroupMembership.GROUP_ROW_ID));
             }
 
             if (mimeType.equals(StructuredName.CONTENT_ITEM_TYPE)) {
@@ -276,7 +335,19 @@ public class ContactsProvider {
         }
         return null;
     }
+    private static class GroupContact{
+        public String groupId;
+        public String groupName;
+        public WritableArray contacts;
 
+        public WritableMap toMap() {
+            WritableMap groups = Arguments.createMap();
+            groups.putString("groupId", groupId);
+            groups.putString("groupName", groupName);
+            groups.putArray("contacts", contacts);
+            return groups;
+        }
+    }
     private static class Contact {
         private String contactId;
         private String displayName;
@@ -293,10 +364,14 @@ public class ContactsProvider {
         private List<Item> emails = new ArrayList<>();
         private List<Item> phones = new ArrayList<>();
         private List<PostalAddressItem> postalAddresses = new ArrayList<>();
+        private String groupName;
+        private String groupRowId;
 
         public Contact(String contactId) {
             this.contactId = contactId;
         }
+
+
 
         public WritableMap toMap() {
             WritableMap contact = Arguments.createMap();
