@@ -45,6 +45,15 @@ public class ContactsManager extends ReactContextBaseJavaModule {
         getAllGroupContacts(callback);
     }
 
+    /*
+     * Returns only group contactable records on phone
+     * queries CommonDataKinds.Contactables to get phones and emails
+     */
+    @ReactMethod
+    public void getOnlyGroup(final Callback callback) {
+        getOnlyGroupContacts(callback);
+    }
+
     /**
      * Introduced for iOS compatibility.  Same as getAll
      *
@@ -89,6 +98,26 @@ public class ContactsManager extends ReactContextBaseJavaModule {
 
                 ContactsProvider contactsProvider = new ContactsProvider(cr);
                 WritableArray contacts = contactsProvider.getGroupContacts();
+                   
+                callback.invoke(null, contacts);
+            }
+        });
+    }
+
+     /**
+     * Retrieves only group contacts.
+     * Uses raw URI when <code>rawUri</code> is <code>true</code>, makes assets copy otherwise.
+     * @param callback user provided callback to run at completion
+     */
+    private void getOnlyGroupContacts(final Callback callback) {
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                Context context = getReactApplicationContext();
+                ContentResolver cr = context.getContentResolver();
+
+                ContactsProvider contactsProvider = new ContactsProvider(cr);
+                WritableArray contacts = contactsProvider.getGroupContactsLike();
                    
                 callback.invoke(null, contacts);
             }

@@ -156,7 +156,7 @@ public class ContactsProvider {
       Map<String, Contact> everyoneElse;
         {
             Cursor cursor =null;
-            Cursor contactGroup = contentResolver.query(ContactsContract.Groups.CONTENT_URI, null, null,null, null);
+            Cursor contactGroup = contentResolver.query(ContactsContract.Groups.CONTENT_URI, null, ContactsContract.Groups.DELETED + "=0",null, null);
             while (contactGroup.moveToNext()) {
                 GroupContact gc = new GroupContact();
 
@@ -164,8 +164,12 @@ public class ContactsProvider {
 
                 String groupRowId = contactGroup.getString(contactGroup.getColumnIndex(ContactsContract.Groups._ID));
                 String groupTitle = (contactGroup.getString(contactGroup.getColumnIndex(ContactsContract.Groups.TITLE)));
+                String groupAccountName = (contactGroup.getString(contactGroup.getColumnIndex(ContactsContract.Groups.ACCOUNT_NAME)));
+                String groupAccountType = (contactGroup.getString(contactGroup.getColumnIndex(ContactsContract.Groups.ACCOUNT_TYPE)));
                 gc.groupId = groupRowId;
                 gc.groupName = groupTitle;
+                gc.groupAccountName = groupAccountName;
+                gc.groupAccountType= groupAccountType;
 
                 //this query to get each groupContactsDetails by filtering groupRowId
                 Cursor groupContactsDetails = contentResolver.query(
@@ -175,10 +179,14 @@ public class ContactsProvider {
                 while (groupContactsDetails.moveToNext()) {
                     try {
                         String contactIndexId = groupContactsDetails.getString(groupContactsDetails.getColumnIndex
-                                (ContactsContract.CommonDataKinds.GroupMembership.CONTACT_ID)) + " ";
+                                (ContactsContract.CommonDataKinds.GroupMembership.CONTACT_ID));
                         String contactName = groupContactsDetails.getString(groupContactsDetails.getColumnIndex
                                 (ContactsContract.CommonDataKinds.GroupMembership.DISPLAY_NAME));
+                        Contact ct = new Contact(contactIndexId);
+                        ct.displayName = contactName;
+                        contacts.pushMap(ct.toMap());
 
+                        //NOT REQUIRED: FOR DETAILS ABOUT CONTACTS
                         try {
                              cursor = contentResolver.query(
                                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null,
@@ -204,7 +212,50 @@ public class ContactsProvider {
 
         return groupContacts;
     }
+    public WritableArray getGroupContactsLike(){
+      WritableArray groupContacts = Arguments.createArray();
+      Map<String, Contact> everyoneElse;
+        {
+            Cursor cursor =null;
+            Cursor contactGroup = contentResolver.query(ContactsContract.Groups.CONTENT_URI, null, ContactsContract.Groups.DELETED + "=0",null, null);
+            while (contactGroup.moveToNext()) {
+                GroupContact gc = new GroupContact();
 
+                WritableArray contacts = Arguments.createArray();
+
+                String groupRowId = contactGroup.getString(contactGroup.getColumnIndex(ContactsContract.Groups._ID));
+                String groupTitle = (contactGroup.getString(contactGroup.getColumnIndex(ContactsContract.Groups.TITLE)));
+                String groupAccountName = (contactGroup.getString(contactGroup.getColumnIndex(ContactsContract.Groups.ACCOUNT_NAME)));
+                String groupAccountType = (contactGroup.getString(contactGroup.getColumnIndex(ContactsContract.Groups.ACCOUNT_TYPE)));
+                gc.groupId = groupRowId;
+                gc.groupName = groupTitle;
+                gc.groupAccountName = groupAccountName;
+                gc.groupAccountType= groupAccountType;
+
+                //this query to get each groupContactsDetails by filtering groupRowId
+                Cursor groupContactsDetails = contentResolver.query(
+                        ContactsContract.Data.CONTENT_URI,null,
+                        ContactsContract.CommonDataKinds.GroupMembership.GROUP_ROW_ID + "=" + groupRowId,null,null);
+
+                while (groupContactsDetails.moveToNext()) {
+                    try {
+                        String contactIndexId = groupContactsDetails.getString(groupContactsDetails.getColumnIndex
+                                (ContactsContract.CommonDataKinds.GroupMembership.CONTACT_ID));
+                        String contactName = groupContactsDetails.getString(groupContactsDetails.getColumnIndex
+                                (ContactsContract.CommonDataKinds.GroupMembership.DISPLAY_NAME));
+                        Contact ct = new Contact(contactIndexId);
+                        ct.displayName = contactName;
+                        contacts.pushMap(ct.toMap());                        
+                    }catch (Exception ex){}
+                }
+                gc.contacts=contacts;
+                groupContacts.pushMap(gc.toMap());
+            }
+
+        }
+
+        return groupContacts;
+    }
     @NonNull
     private Map<String, Contact> loadContactsFrom(Cursor cursor) {
 
@@ -339,11 +390,15 @@ public class ContactsProvider {
         public String groupId;
         public String groupName;
         public WritableArray contacts;
+        public String groupAccountName;
+        public String groupAccountType;
 
         public WritableMap toMap() {
             WritableMap groups = Arguments.createMap();
             groups.putString("groupId", groupId);
             groups.putString("groupName", groupName);
+            groups.putString("groupAccountName", groupAccountName);
+            groups.putString("groupAccountType", groupAccountType);
             groups.putArray("contacts", contacts);
             return groups;
         }
