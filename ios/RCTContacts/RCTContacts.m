@@ -90,6 +90,16 @@ RCT_EXPORT_METHOD(getAll:(RCTResponseSenderBlock) callback)
     [self getAllContacts:callback withThumbnails:true];
 }
 
+RCT_EXPORT_METHOD(getAllGroup:(RCTResponseSenderBlock) callback)
+{
+    callback(@[[NSNull null]]);
+}
+
+RCT_EXPORT_METHOD(getOnlyGroup:(RCTResponseSenderBlock) callback)
+{
+    callback(@[[NSNull null]]);
+}
+
 RCT_EXPORT_METHOD(getAllWithoutPhotos:(RCTResponseSenderBlock) callback)
 {
     [self getAllContacts:callback withThumbnails:false];
