@@ -32,7 +32,7 @@ public class ContactsManager extends ReactContextBaseJavaModule {
      * queries CommonDataKinds.Contactables to get phones and emails
      */
     @ReactMethod
-    public void getAll(final Callback callback) {
+    public void getAllGroupsLite(final Callback callback) {
         getAllContacts(callback);
     }
 
@@ -41,7 +41,7 @@ public class ContactsManager extends ReactContextBaseJavaModule {
      * queries CommonDataKinds.Contactables to get phones and emails
      */
     @ReactMethod
-    public void getAllGroup(final Callback callback) {
+    public void getAllGroups(final Callback callback) {
         getAllGroupContacts(callback);
     }
 
