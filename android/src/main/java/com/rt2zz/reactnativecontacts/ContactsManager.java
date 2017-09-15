@@ -32,7 +32,7 @@ public class ContactsManager extends ReactContextBaseJavaModule {
      * queries CommonDataKinds.Contactables to get phones and emails
      */
     @ReactMethod
-    public void getAllGroupsLite(final Callback callback) {
+    public void getAll(final Callback callback) {
         getAllContacts(callback);
     }
 
@@ -42,7 +42,7 @@ public class ContactsManager extends ReactContextBaseJavaModule {
      */
     @ReactMethod
     public void getAllGroups(final Callback callback) {
-        getAllGroupContacts(callback);
+        getAllGroupsContacts(callback);
     }
 
     /*
@@ -50,8 +50,8 @@ public class ContactsManager extends ReactContextBaseJavaModule {
      * queries CommonDataKinds.Contactables to get phones and emails
      */
     @ReactMethod
-    public void getOnlyGroup(final Callback callback) {
-        getOnlyGroupContacts(callback);
+    public void getAllGroupsLite(final Callback callback) {
+        getOnlyGroupsLite(callback);
     }
 
     /**
@@ -89,7 +89,7 @@ public class ContactsManager extends ReactContextBaseJavaModule {
      * Uses raw URI when <code>rawUri</code> is <code>true</code>, makes assets copy otherwise.
      * @param callback user provided callback to run at completion
      */
-    private void getAllGroupContacts(final Callback callback) {
+    private void getAllGroupsContacts(final Callback callback) {
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
@@ -97,7 +97,7 @@ public class ContactsManager extends ReactContextBaseJavaModule {
                 ContentResolver cr = context.getContentResolver();
 
                 ContactsProvider contactsProvider = new ContactsProvider(cr);
-                WritableArray contacts = contactsProvider.getGroupContacts();
+                WritableArray contacts = contactsProvider.getGroupsContacts();
                    
                 callback.invoke(null, contacts);
             }
@@ -109,7 +109,7 @@ public class ContactsManager extends ReactContextBaseJavaModule {
      * Uses raw URI when <code>rawUri</code> is <code>true</code>, makes assets copy otherwise.
      * @param callback user provided callback to run at completion
      */
-    private void getOnlyGroupContacts(final Callback callback) {
+    private void getOnlyGroupsLite(final Callback callback) {
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
@@ -117,7 +117,7 @@ public class ContactsManager extends ReactContextBaseJavaModule {
                 ContentResolver cr = context.getContentResolver();
 
                 ContactsProvider contactsProvider = new ContactsProvider(cr);
-                WritableArray contacts = contactsProvider.getGroupContactsLike();
+                WritableArray contacts = contactsProvider.getGroupContactsLite();
                    
                 callback.invoke(null, contacts);
             }

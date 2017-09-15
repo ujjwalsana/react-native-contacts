@@ -85,7 +85,7 @@ RCT_EXPORT_METHOD(getContactsMatchingString:(NSString *)string callback:(RCTResp
     [self retrieveContactsFromAddressBook:contactStore withThumbnails:withThumbnails withCallback:callback];
 }
 
-RCT_EXPORT_METHOD(getAllGroupsLite:(RCTResponseSenderBlock) callback)
+RCT_EXPORT_METHOD(getAll:(RCTResponseSenderBlock) callback)
 {
     [self getAllContacts:callback withThumbnails:true];
 }
@@ -95,7 +95,7 @@ RCT_EXPORT_METHOD(getAllGroups:(RCTResponseSenderBlock) callback)
     callback(@[[NSNull null]]);
 }
 
-RCT_EXPORT_METHOD(getOnlyGroup:(RCTResponseSenderBlock) callback)
+RCT_EXPORT_METHOD(getAllGroupsLite:(RCTResponseSenderBlock) callback)
 {
     callback(@[[NSNull null]]);
 }

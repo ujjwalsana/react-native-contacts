@@ -151,7 +151,7 @@ public class ContactsProvider {
         return contacts;
     }
 
-    public WritableArray getGroupContacts(){
+    public WritableArray getGroupsContacts(){
       WritableArray groupContacts = Arguments.createArray();
       Map<String, Contact> everyoneElse;
         {
@@ -212,7 +212,7 @@ public class ContactsProvider {
 
         return groupContacts;
     }
-    public WritableArray getGroupContactsLike(){
+    public WritableArray getGroupContactsLite(){
       WritableArray groupContacts = Arguments.createArray();
       Map<String, Contact> everyoneElse;
         {
