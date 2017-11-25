@@ -85,7 +85,7 @@ RCT_EXPORT_METHOD(getContactsMatchingString:(NSString *)string callback:(RCTResp
     [self retrieveContactsFromAddressBook:contactStore withThumbnails:withThumbnails withCallback:callback];
 }
 
-RCT_EXPORT_METHOD(getAll:(RCTResponseSenderBlock) callback)
+RCT_EXPORT_METHOD(getAll: ( int )offset lim:(int) limit callba:(RCTResponseSenderBlock) callback )
 {
     [self getAllContacts:callback withThumbnails:true];
 }

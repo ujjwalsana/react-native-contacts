@@ -10,6 +10,7 @@ import android.provider.ContactsContract.CommonDataKinds;
 import android.provider.ContactsContract.CommonDataKinds.Organization;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.RawContacts;
+import android.util.Log;
 
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -32,8 +33,8 @@ public class ContactsManager extends ReactContextBaseJavaModule {
      * queries CommonDataKinds.Contactables to get phones and emails
      */
     @ReactMethod
-    public void getAll(final Callback callback) {
-        getAllContacts(callback);
+    public void getAll(final int offset,final int limit,final Callback callback) {
+        getAllContacts(offset,limit,callback);
     }
 
     /*
@@ -61,7 +62,7 @@ public class ContactsManager extends ReactContextBaseJavaModule {
      */
     @ReactMethod
     public void getAllWithoutPhotos(final Callback callback) {
-        getAllContacts(callback);
+        getAllContacts(0,200000,callback);
     }
 
     /**
@@ -69,8 +70,8 @@ public class ContactsManager extends ReactContextBaseJavaModule {
      * Uses raw URI when <code>rawUri</code> is <code>true</code>, makes assets copy otherwise.
      * @param callback user provided callback to run at completion
      */
-    private void getAllContacts(final Callback callback) {
-        AsyncTask.execute(new Runnable() {
+    private void getAllContacts(final int offset,final int limit, final Callback callback) {
+        /*AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 Context context = getReactApplicationContext();
@@ -81,7 +82,32 @@ public class ContactsManager extends ReactContextBaseJavaModule {
 
                 callback.invoke(null, contacts);
             }
-        });
+        });*/
+
+        new AsyncTask<Object, Integer, WritableArray> (){
+            protected void onPreExecute(){
+
+                Log.d("REACT-NATIVE-CONTACTS","START CONTACT LOADING");
+            }
+            protected WritableArray doInBackground(Object... obj) {
+                Context context = getReactApplicationContext();
+                ContentResolver cr = context.getContentResolver();
+
+                ContactsProvider contactsProvider = new ContactsProvider(cr);
+                WritableArray contacts = contactsProvider.getContacts(offset,limit);
+               // Log.d("REACT-NATIVE-CONTACTS",contacts.toString());
+                return contacts;
+            }
+
+            protected void onProgressUpdate(Integer... progress) {
+
+            }
+
+            protected void onPostExecute(WritableArray contacts) {
+                Log.d("REACT-NATIVE-CONTACTS","FINISH CONTACT LOADING");
+                callback.invoke(null, contacts);
+            }
+        }.execute();
     }
 
     /**

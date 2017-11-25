@@ -86,7 +86,7 @@ public class ContactsProvider {
             );
 
             try {
-                matchingContacts = loadContactsFrom(cursor);
+                matchingContacts = loadContactsFrom(cursor,0,200000);
             } finally {
                 if (cursor != null) {
                     cursor.close();
@@ -101,7 +101,7 @@ public class ContactsProvider {
         return contacts;
     }
 
-    public WritableArray getContacts() {
+    public WritableArray getContacts(int offset,int count) {
         Map<String, Contact> justMe;
         {
             Cursor cursor = contentResolver.query(
@@ -113,7 +113,8 @@ public class ContactsProvider {
             );
 
             try {
-                justMe = loadContactsFrom(cursor);
+                justMe = loadContactsFrom(cursor,0,200000);
+                Log.d("REACT_NATIVE_CONTACTS","JUST ME FINISHED");
             } finally {
                 if (cursor != null) {
                     cursor.close();
@@ -127,12 +128,13 @@ public class ContactsProvider {
                     ContactsContract.Data.CONTENT_URI,
                     FULL_PROJECTION.toArray(new String[FULL_PROJECTION.size()]),
                     ContactsContract.Data.MIMETYPE + "=? OR " + ContactsContract.Data.MIMETYPE + "=? OR " + ContactsContract.Data.MIMETYPE + "=? OR " + ContactsContract.Data.MIMETYPE + "=? OR " + ContactsContract.Data.MIMETYPE + "=?",
-                    new String[]{Email.CONTENT_ITEM_TYPE, Phone.CONTENT_ITEM_TYPE, StructuredName.CONTENT_ITEM_TYPE, Organization.CONTENT_ITEM_TYPE, StructuredPostal.CONTENT_ITEM_TYPE},
-                    null
+                    new String[]{Phone.CONTENT_ITEM_TYPE, Phone.CONTENT_ITEM_TYPE, StructuredName.CONTENT_ITEM_TYPE, Phone.CONTENT_ITEM_TYPE, Phone.CONTENT_ITEM_TYPE},
+                    " contact_id asc"
             );
 
             try {
-                everyoneElse = loadContactsFrom(cursor);
+                everyoneElse = loadContactsFrom(cursor,offset,count);
+                Log.d("REACT_NATIVE_CONTACTS","ALL FINISHED");
             } finally {
                 if (cursor != null) {
                     cursor.close();
@@ -141,11 +143,13 @@ public class ContactsProvider {
         }
 
         WritableArray contacts = Arguments.createArray();
-        for (Contact contact : justMe.values()) {
+        /*for (Contact contact : justMe.values()) {
             contacts.pushMap(contact.toMap());
-        }
+            Log.d("REACT_NATIVE_CONTACTS",contact.toMap().toString());
+        }*/
         for (Contact contact : everyoneElse.values()) {
             contacts.pushMap(contact.toMap());
+            //Log.d("REACT_NATIVE_CONTACTS",contact.toMap().toString());
         }
 
         return contacts;
@@ -192,7 +196,7 @@ public class ContactsProvider {
                                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null,
                                 ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactIndexId,null,null);
 
-                            everyoneElse = loadContactsFrom(cursor);
+                            everyoneElse = loadContactsFrom(cursor,0,200000);
                             for (Contact contact : everyoneElse.values()) {
 
                                 contacts.pushMap(contact.toMap());
@@ -257,11 +261,17 @@ public class ContactsProvider {
         return groupContacts;
     }
     @NonNull
-    private Map<String, Contact> loadContactsFrom(Cursor cursor) {
+    private Map<String, Contact> loadContactsFrom(Cursor cursor,int offset, int count) {
 
         Map<String, Contact> map = new LinkedHashMap<>();
 
+        Log.d("REACT_NATIVE_CONTACT","" + cursor.getCount()+" "+cursor.getColumnCount());
+        int i=0;
         while (cursor != null && cursor.moveToNext()) {
+            i++;
+            if(i<offset){
+                continue;
+            }
 
             int columnIndex = cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID);
             String contactId;
@@ -286,11 +296,11 @@ public class ContactsProvider {
             }
 
             if(TextUtils.isEmpty(contact.photoUri)) {
-                String rawPhotoURI = cursor.getString(cursor.getColumnIndex(Contactables.PHOTO_URI));
+                /*String rawPhotoURI = cursor.getString(cursor.getColumnIndex(Contactables.PHOTO_URI));
                 if (!TextUtils.isEmpty(rawPhotoURI)) {
                     contact.photoUri = rawPhotoURI;
                     contact.hasPhoto = true;
-                }
+                }*/
             }
             if (mimeType.equals(ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE)) {
                 contact.groupName = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.GroupMembership.DISPLAY_NAME));
@@ -301,8 +311,10 @@ public class ContactsProvider {
                 contact.givenName = cursor.getString(cursor.getColumnIndex(StructuredName.GIVEN_NAME));
                 contact.middleName = cursor.getString(cursor.getColumnIndex(StructuredName.MIDDLE_NAME));
                 contact.familyName = cursor.getString(cursor.getColumnIndex(StructuredName.FAMILY_NAME));
+                /*
                 contact.prefix = cursor.getString(cursor.getColumnIndex(StructuredName.PREFIX));
                 contact.suffix = cursor.getString(cursor.getColumnIndex(StructuredName.SUFFIX));
+                */
             } else if (mimeType.equals(Phone.CONTENT_ITEM_TYPE)) {
                 String phoneNumber = cursor.getString(cursor.getColumnIndex(Phone.NUMBER));
                 int type = cursor.getInt(cursor.getColumnIndex(Phone.TYPE));
@@ -325,7 +337,7 @@ public class ContactsProvider {
                     contact.phones.add(new Contact.Item(label, phoneNumber));
                 }
             } else if (mimeType.equals(Email.CONTENT_ITEM_TYPE)) {
-                String email = cursor.getString(cursor.getColumnIndex(Email.ADDRESS));
+                /*String email = cursor.getString(cursor.getColumnIndex(Email.ADDRESS));
                 int type = cursor.getInt(cursor.getColumnIndex(Email.TYPE));
 
                 if (!TextUtils.isEmpty(email)) {
@@ -350,14 +362,23 @@ public class ContactsProvider {
                         default:
                             label = "other";
                     }
-                    contact.emails.add(new Contact.Item(label, email));
+
                 }
+                contact.emails.add(new Contact.Item(label, email)); */
             } else if (mimeType.equals(Organization.CONTENT_ITEM_TYPE)) {
+                /*
                 contact.company = cursor.getString(cursor.getColumnIndex(Organization.COMPANY));
                 contact.jobTitle = cursor.getString(cursor.getColumnIndex(Organization.TITLE));
                 contact.department = cursor.getString(cursor.getColumnIndex(Organization.DEPARTMENT));
+                */
             } else if (mimeType.equals(StructuredPostal.CONTENT_ITEM_TYPE)) {
-                contact.postalAddresses.add(new Contact.PostalAddressItem(cursor));
+                 /*contact.postalAddresses.add(new Contact.PostalAddressItem(cursor));*/
+            }
+
+            if(map.size() == count+1){
+                map.remove(contactId);
+                Log.d("REACT_NATIVE_CONTACT"," " + i + " " + map.size());
+                break;
             }
         }
 
